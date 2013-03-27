@@ -2,10 +2,12 @@ require 'httpclient'
 require 'pathname'
 require 'json'
 require 'uri'
+require 'logger'
 
-user = ENV['BROWSERSTACK_USER']
-pass = ENV['BROWSERSTACK_PASS']
-url  = ENV['BROWSERSTACK_URL']
+user   = ENV['BROWSERSTACK_USER']
+pass   = ENV['BROWSERSTACK_PASS']
+url    = ENV['BROWSERSTACK_URL']
+logger = Logger.new('browsers.log')
 
 class BrowserStackClient
 
@@ -46,8 +48,8 @@ puts "awesome, #{total} browsers to test"
 client.available_browsers.each_with_index do |browser, index|
   id = client.spawn_worker(url, browser)
   sleep(1) while client.worker_status(id) == "queue"
-
-  puts "#{index + 1} of #{total}"
+  print "."
+  logger.info "\n#{JSON.pretty_generate(browser)}"
   client.terminate_worker(id)
 end
 
