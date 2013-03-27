@@ -1,6 +1,7 @@
 require 'httpclient'
 require 'pathname'
 require 'json'
+require 'uri'
 
 user = ENV['BROWSERSTACK_USER']
 pass = ENV['BROWSERSTACK_PASS']
@@ -24,7 +25,7 @@ class BrowserStackClient
   end
 
   def spawn_worker(url, params)
-    response = http.post(@root.join('worker'), params.merge(url: url))
+    response = http.post(@root.join('worker'), params.merge(url: URI.escape(url)))
     JSON.parse(response.body)["id"]
   end
 
@@ -39,11 +40,15 @@ class BrowserStackClient
 end
 
 client = BrowserStackClient.new(user, pass)
-puts "---> awesome, %s browsers to test" % client.available_browsers.count
+total  = client.available_browsers.count
+puts "awesome, #{total} browsers to test"
 
 client.available_browsers.each_with_index do |browser, index|
   id = client.spawn_worker(url, browser)
   sleep(1) while client.worker_status(id) == "queue"
-  puts "---> worker #{index} status is #{client.worker_status(id)}, terminating"
+
+  puts "#{index + 1} of #{total}"
   client.terminate_worker(id)
 end
+
+puts "awesome, #{total} browsers headers collected"
